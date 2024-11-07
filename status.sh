@@ -43,6 +43,10 @@ EN_MONTH=$(date +"%B")
 FR_DAY=$(translate_day "$EN_DAY")
 FR_MONTH=$(translate_month "$EN_MONTH")
 
+
+# Get the power status
+power_status=$(upower -i $(upower -e | grep '/battery') | grep -E "state|percentage")
+
 while true; do
     # Get current time and date
     HOUR_12=$(date +"%I")  # 12-hour format with leading zero
@@ -76,40 +80,57 @@ while true; do
     # Check if the minute is even or odd
     if (( MINUTE % 2 == 0 )); then
         # Even minute format: red text on black background
+        if [[ "$HOUR_12" == "12" ]]; then
+            HOUR_12="X"
+        fi
         TIME="$HOUR_12:$MINUTE_FIRST_CHAR $AMPM"
         DATE="$FR_DAY $DAY_NUM $FR_MONTH"
     else
         # Odd minute format: white text on blue background
+        if [[ "${HOUR_24:0:2}" == "00" ]]; then
+            HOUR_24="XX:$MINUTE"
+        fi
         TIME="$HOUR_24"
         DATE="$DATE_YMD"
     fi
 
-	# pourcent
-	pour_cent=$(acpi | awk '{print $4}')
-	pour_cent=$(echo ${pour_cent} | sed 's/,//')
-	if [ ${pour_cent//[!0-9]/} -gt $low ]; then
-		BAT="${pour_cent}"
-	else
-		BAT="${pour_cent}"
-	fi
+    bat_text=""
 
-
-    n_pour_cent=${pour_cent%\%}
-    # Assume $pour_cent holds the battery percentage as an integer
-    if [ "$n_pour_cent" -ge 80 ]; then
-        battery_char="█"  # Full battery
-    elif [ "$n_pour_cent" -ge 60 ]; then
-        battery_char="▓"  # 75% battery
-    elif [ "$n_pour_cent" -ge 40 ]; then
-        battery_char="▒"  # 50% battery
-    elif [ "$n_pour_cent" -ge 20 ]; then
-        battery_char="░"  # 25% battery
-    else
-        battery_char="▁"  # Low battery
+    if echo "$power_status" | grep -q "discharging"; then
+    	# pourcent
+    	pour_cent=$(acpi | awk '{print $4}')
+    	pour_cent=$(echo ${pour_cent} | sed 's/,//')
+    	if [ ${pour_cent//[!0-9]/} -gt $low ]; then
+    		BAT="${pour_cent}"
+    	else
+    		BAT="${pour_cent}"
+    	fi
+        n_pour_cent=${pour_cent%\%}
+        # Assume $pour_cent holds the battery percentage as an integer
+        if [ "$n_pour_cent" -ge 80 ]; then
+            battery_char="█"  # Full battery
+        elif [ "$n_pour_cent" -ge 60 ]; then
+            battery_char="▓"  # 75% battery
+        elif [ "$n_pour_cent" -ge 40 ]; then
+            battery_char="▒"  # 50% battery
+        elif [ "$n_pour_cent" -ge 20 ]; then
+            battery_char="░"  # 25% battery
+        else
+            battery_char="▁"  # Low battery
+        fi
+        bat_text="($battery_char $pour_cent)"
     fi
-
+    
+    task=""
+    # Check if /tmp/todo.md exists and is not empty
+    if [[ -s "/tmp/todo.tmp" ]]; then
+        # Pick a random line from /tmp/todo.md
+        line=$(shuf -n 1 "/tmp/todo.tmp")
+        # Remove the first 3 and last 3 characters
+        task="(${line:2:-11})"
+    fi
     # Output the formatted text to lemonbar
-    echo "$battery_char ($TIME) - ($DATE) - ($disk_space)"
+    echo "$bat_text ($TIME) ($DATE) ($disk_space) $task"
 
     # Sleep for 60 seconds to update the time
     sleep 60
