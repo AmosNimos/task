@@ -1,12 +1,14 @@
 <body>
 
 <h1 align="center">TaskCLI 📋</h1>
+
 <p align="center">
   <i>Effortlessly manage your tasks right from the command line!</i><br>
   <b>Created by Amosnimos</b>
 </p>
 
 <h2>Overview</h2>
+<img src="https://cheqmark.io/blog/wp-content/uploads/2023/03/what-is-checklist.jpg" alt="banner" style="height:340px"></img>
 <p>
   TaskCLI is a simple, lightweight Python-based tool to manage tasks in your terminal. Add, remove, view, and edit tasks with ease, 
   keeping everything organized and available directly from the command line.
