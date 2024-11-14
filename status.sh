@@ -37,7 +37,8 @@ translate_month() {
 
 # Get the last two digits of the year
 YEAR=$(date +"%y")
-DATE_YMD=$(date +"%Y-%m-%d")  # Date in YYYY-MM-DD format
+DATE_YMD=$(date +"%Y %m %d")  # Date in YYYY-MM-DD format
+DATE_DMY=$(date +"%d-%m-%y")  # Date in DD-MM-YY format
 EN_DAY=$(date +"%A")
 EN_MONTH=$(date +"%B")
 FR_DAY=$(translate_day "$EN_DAY")
@@ -81,17 +82,23 @@ while true; do
     if (( MINUTE % 2 == 0 )); then
         # Even minute format: red text on black background
         if [[ "$HOUR_12" == "12" ]]; then
+            HOUR_12="0"
+        elif [[ "$HOUR_12" == "11" ]]; then
+            HOUR_12="I"
+        elif [[ "$HOUR_12" == "10" ]]; then
             HOUR_12="X"
         fi
-        TIME="$HOUR_12:$MINUTE_FIRST_CHAR $AMPM"
-        DATE="$FR_DAY $DAY_NUM $FR_MONTH"
+
+        #indice=" ${AMPM:0:1}"
+        TIME="$HOUR_12:$MINUTE_FIRST_CHAR${indice}"
+        DATE="$DATE_DMY"
     else
         # Odd minute format: white text on blue background
-        if [[ "${HOUR_24:0:2}" == "00" ]]; then
-            HOUR_24="XX:$MINUTE"
-        fi
+#        if [[ "${HOUR_24:0:2}" == "00" ]] || [[ "${HOUR_24:0:2}" == "12" ]] ; then
+#            HOUR_24="XX:$MINUTE"
+#        fi
         TIME="$HOUR_24"
-        DATE="$DATE_YMD"
+        DATE="$FR_DAY $DAY_NUM $FR_MONTH"
     fi
 
     bat_text=""
@@ -129,8 +136,9 @@ while true; do
         # Remove the first 3 and last 3 characters
         task="(${line:2:-11})"
     fi
+    offset=""
     # Output the formatted text to lemonbar
-    echo "$bat_text ($TIME) ($DATE) ($disk_space) $task"
+    echo "${offset}$bat_text ($TIME) ($DATE) ($disk_space) $task"
 
     # Sleep for 60 seconds to update the time
     sleep 60
