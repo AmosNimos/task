@@ -1,0 +1,49 @@
+#! /bin/sh
+
+# set shortcut
+sxhkd &
+
+# set the ibus deamon for input changes
+
+# set default cursor shape
+xsetroot -cursor_name left_ptr &
+
+# This ensures that lemonbar always floats above all windows.
+# Start lemonbar
+pkill lemonbar
+if ! pgrep -x "lemonbar" > /dev/null; then
+    # Start lemonbar
+    ~/status/status.sh | lemonbar -g 1100+150+8 -f "C64 Pro Mono:size=12" -B "#00000000" -F "#ffffff" -p -b &
+    ~/status/reset.sh &
+fi
+# "#00000000"
+bspc rule -a lemonbar floating=on
+bspc rule -a "lemonbar" layer=above
+
+# Remove vertical padding
+#bspc config top_padding 0 &
+#bspc config bottom_padding 0 &
+
+
+# ibus-daemon -d
+
+bspc monitor -d 1 2 3 4 5 6 7 8 9 0
+
+bspc config border_width 8
+bspc config window_gap 20
+
+bspc config split_ratio          0.50
+bspc config borderless_monocle   true
+bspc config gapless_monocle      true
+
+bspc config focused_border_color "#E9EDEF"
+bspc config normal_border_color "#000000"
+
+bspc rule -a Chromium desktop='^2'
+bspc rule -a mplayer2 state=floating
+bspc rule -a Kupfer.py focus=on
+bspc rule -a Screenkey manage=off
+bspc rule -a cool-retro-term state=fullscreen
+
+setxkbmap us &
+
