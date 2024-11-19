@@ -58,13 +58,13 @@ while true; do
     DAY_NUM=$(date +"%d")
     # Get the free space and total space in human-readable format
     disk_info=$(df -h | grep '/dev/nvme0n1p2')
-
+    percentage_used=$(echo "$disk_info" | awk '{print $5}')
     # Extract the free and total space from the output
     free_space=$(echo $disk_info | awk '{print $4}')
     # Extract the used and total space from the output
     used_space=$(echo $disk_info | awk '{print $3}')
     total_space=$(echo $disk_info | awk '{print $2}')
-    disk_space="$used_space/$total_space"
+    disk_space="$percentage_used"
 
     # Get the first character of the minute
     MINUTE_FIRST_CHAR="${MINUTE:0:1}"
@@ -78,28 +78,66 @@ while true; do
     # Format output for lemonbar
     #OUTPUT="${padding}($HOUR_12:$MINUTE_FIRST_CHAR) - ($HOUR_24) - ($DATE)"
 
-    # Check if the minute is even or odd
-    if (( MINUTE % 2 == 0 )); then
-        # Even minute format: red text on black background
-        if [[ "$HOUR_12" == "12" ]]; then
-            HOUR_12="0"
-        elif [[ "$HOUR_12" == "11" ]]; then
-            HOUR_12="I"
-        elif [[ "$HOUR_12" == "10" ]]; then
-            HOUR_12="X"
-        fi
 
-        #indice=" ${AMPM:0:1}"
-        TIME="$HOUR_12:$MINUTE_FIRST_CHAR${indice}"
-        DATE="$DATE_DMY"
-    else
-        # Odd minute format: white text on blue background
-#        if [[ "${HOUR_24:0:2}" == "00" ]] || [[ "${HOUR_24:0:2}" == "12" ]] ; then
-#            HOUR_24="XX:$MINUTE"
+    romanise() {
+        local input="$1"
+        local result="$input"
+
+        # Define a mapping of numbers to Roman numerals
+        declare -A roman_map=(
+            [10]="X" [11]="I" [12]="0"
+        )
+
+        # Replace exact matches in the input
+        for num in "${!roman_map[@]}"; do
+            result="${result//$num/${roman_map[$num]}}"
+        done
+
+        echo "$result"
+    }
+
+    # Optimised time
+    
+    # Even minute format: red text on black background
+#    if [[ "$HOUR_12" == "12" ]]; then
+#        HOUR_12="0"
+#    elif [[ "$HOUR_12" == "11" ]]; then
+#        HOUR_12="I"
+#    elif [[ "$HOUR_12" == "10" ]]; then
+#        HOUR_12="X"
+#    fi
+
+    HOUR_12=$(romanise $HOUR_12)
+    #indice=" ${AMPM:0:1}"
+    TIME="$HOUR_12:$MINUTE_FIRST_CHAR${indice}"
+    DATE="$DATE_DMY"
+
+    DATE=$(romanise $DATE)
+
+    # Multiple time format
+
+    # Check if the minute is even or odd
+#    if (( MINUTE % 2 == 0 )); then
+#        # Even minute format: red text on black background
+#        if [[ "$HOUR_12" == "12" ]]; then
+#            HOUR_12="0"
+#        elif [[ "$HOUR_12" == "11" ]]; then
+#            HOUR_12="I"
+#        elif [[ "$HOUR_12" == "10" ]]; then
+#            HOUR_12="X"
 #        fi
-        TIME="$HOUR_24"
-        DATE="$FR_DAY $DAY_NUM $FR_MONTH"
-    fi
+#
+#        #indice=" ${AMPM:0:1}"
+#        TIME="$HOUR_12:$MINUTE_FIRST_CHAR${indice}"
+#        DATE="$DATE_DMY"
+#    else
+#        # Odd minute format: white text on blue background
+##        if [[ "${HOUR_24:0:2}" == "00" ]] || [[ "${HOUR_24:0:2}" == "12" ]] ; then
+##            HOUR_24="XX:$MINUTE"
+##        fi
+#        TIME="$HOUR_24"
+#        DATE="$FR_DAY $DAY_NUM $FR_MONTH"
+#    fi
 
     bat_text=""
 
@@ -138,7 +176,7 @@ while true; do
     fi
     offset=""
     # Output the formatted text to lemonbar
-    echo "${offset}$bat_text ($TIME) ($DATE) ($disk_space) $task"
+    echo "${offset}$bat_text [$TIME] [$DATE] [$disk_space] $task"
 
     # Sleep for 60 seconds to update the time
     sleep 60
